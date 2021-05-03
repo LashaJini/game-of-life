@@ -20,11 +20,28 @@
     >
     <div>
       <button id="play-pause">play</button>
+      <button id="next-generation">next generation</button>
+    </div>
+    <div>
+      <button id="initial">initial</button>
       <button id="clear">clear</button>
+      <button id="reset">reset</button>
     </div>
     <div>4<input id="cell-size" type="range" min="4" max="16" />16</div>
     <div>
       1<input id="tick-speed" type="range" min="1" max="10" value="1" />10
+    </div>
+    <div>
+      <input type="color" id="cell-color" />
+      <label for="cell-color">cell color</label>
+      <br />
+      <input type="color" id="border-color" />
+      <label for="border-color">border color</label>
+    </div>
+    <div>
+      <button id="universe-size">new size</button>
+      <input type="text" size="10" id="row-size" />
+      <input type="text" size="10" id="col-size" />
     </div>
     <canvas class="scene"></canvas>
     <script src="./bootstrap.js"></script>

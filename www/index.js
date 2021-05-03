@@ -1,27 +1,45 @@
 import { memory } from "game-of-life/game_of_life_bg";
 import { Universe, Cell } from "game-of-life";
 
-const cell_range = document.querySelector("#cell-size");
-const play_pause = document.querySelector("#play-pause");
+const borderColor = document.querySelector("#border-color");
+const cellColor = document.querySelector("#cell-color");
+const initial = document.querySelector("#initial");
+const nextGeneration = document.querySelector("#next-generation");
+const newSize = document.querySelector("#universe-size");
+const rowInput = document.querySelector("#row-size");
+const colInput = document.querySelector("#col-size");
+const reset = document.querySelector("#reset");
+const cellRange = document.querySelector("#cell-size");
+const playPause = document.querySelector("#play-pause");
 const clear = document.querySelector("#clear");
-const tick_speed = document.querySelector("#tick-speed");
+const tickSpeed = document.querySelector("#tick-speed");
 
-let CELL_SIZE = parseInt(cell_range.value);
-const ALIVE_COLOR = "#000";
+let CELL_SIZE = parseInt(cellRange.value);
+let ALIVE_COLOR = cellColor.value ? cellColor.value : "#000";
 const DEAD_COLOR = "#fff";
-const STROKE_COLOR = "#eee";
-let TICK = parseInt(tick_speed.value);
+let STROKE_COLOR = borderColor.value ? borderColor.value : "#eee";
+let TICK = parseInt(tickSpeed.value);
 
-const universe = Universe.new(64, 64);
-universe.random();
-const width = universe.get_width();
-const height = universe.get_height();
+let rows = Math.floor(parseInt(rowInput.value));
+let cols = Math.floor(parseInt(colInput.value));
+
+const universe = Universe.new(
+  isPositiveNumber(rows) ? rows : 32,
+  isPositiveNumber(cols) ? cols : 32
+);
+// universe.random();
+let width = universe.get_width();
+let height = universe.get_height();
 
 const canvas = document.querySelector(".scene");
 canvas.width = (CELL_SIZE + 1) * width + 1;
 canvas.height = (CELL_SIZE + 1) * height + 1;
 
 const ctx = canvas.getContext("2d");
+
+function isPositiveNumber(rows) {
+  return typeof rows === "number" && rows > 0 && !Number.isNaN(rows);
+}
 
 const getIndex = (row, col) => {
   return row * width + col;
@@ -100,21 +118,21 @@ const drawCells = () => {
 };
 
 const play = () => {
-  play_pause.textContent = "pause";
+  playPause.textContent = "pause";
 
   animationId = requestAnimationFrame(render);
   return true;
 };
 
 const pause = () => {
-  play_pause.textContent = "play";
+  playPause.textContent = "play";
 
   cancelAnimationFrame(animationId);
   animationId = null;
   return true;
 };
 
-cell_range.addEventListener("change", (event) => {
+cellRange.addEventListener("change", (event) => {
   CELL_SIZE = parseInt(event.target.value);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   canvas.width = (CELL_SIZE + 1) * width + 1;
@@ -123,15 +141,46 @@ cell_range.addEventListener("change", (event) => {
   !animationId && draw();
 });
 
-play_pause.addEventListener("click", (event) => {
+newSize.addEventListener("click", (event) => {
+  rows = Math.floor(parseInt(rowInput.value));
+  cols = Math.floor(parseInt(colInput.value));
+  if (isPositiveNumber(rows) && isPositiveNumber(cols)) {
+    width = rows;
+    height = cols;
+
+    universe.set_width(width);
+    universe.set_height(height);
+    // we are "emptying" after, because universe must be filled with dead cells.
+    universe.empty();
+
+    canvas.width = (CELL_SIZE + 1) * width + 1;
+    canvas.height = (CELL_SIZE + 1) * height + 1;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    draw();
+  }
+});
+
+playPause.addEventListener("click", (event) => {
   animationId ? pause() : play();
 });
 
-tick_speed.addEventListener("change", (event) => {
+tickSpeed.addEventListener("change", (event) => {
   TICK = parseInt(event.target.value);
-  console.log(TICK);
 
-  pause() && play();
+  // pause() && play();
+});
+
+cellColor.addEventListener("change", (event) => {
+  ALIVE_COLOR = cellColor.value ? cellColor.value : "#000";
+  drawCells();
+  // pause() && play();
+});
+
+borderColor.addEventListener("change", (event) => {
+  STROKE_COLOR = borderColor.value ? borderColor.value : "#eee";
+  drawGrid();
+  // pause() && play();
 });
 
 canvas.addEventListener("click", (event) => {
@@ -147,6 +196,20 @@ canvas.addEventListener("click", (event) => {
   draw();
 });
 
+nextGeneration.addEventListener("click", (event) => {
+  pause();
+  for (let i = 0; i < TICK; i++) {
+    universe.tick();
+  }
+  draw();
+});
+
+initial.addEventListener("click", (event) => {
+  pause();
+  universe.random();
+  draw();
+});
+
 clear.addEventListener("click", (event) => {
   pause();
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -154,5 +217,11 @@ clear.addEventListener("click", (event) => {
   draw();
 });
 
+reset.addEventListener("click", (event) => {
+  pause();
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  universe.reset();
+  draw();
+});
+
 draw();
-play();
