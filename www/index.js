@@ -1,6 +1,7 @@
 import { memory } from "game-of-life/game_of_life_bg";
 import { Universe, Cell } from "game-of-life";
 
+const animationSpeed = document.querySelector("#animation-speed");
 const borderColor = document.querySelector("#border-color");
 const cellColor = document.querySelector("#cell-color");
 const initial = document.querySelector("#initial");
@@ -19,6 +20,7 @@ let ALIVE_COLOR = cellColor.value ? cellColor.value : "#000";
 const DEAD_COLOR = "#fff";
 let STROKE_COLOR = borderColor.value ? borderColor.value : "#eee";
 let TICK = parseInt(tickSpeed.value);
+let ANIMATION_SPEED = parseInt(animationSpeed.value);
 
 let rows = Math.floor(parseInt(rowInput.value));
 let cols = Math.floor(parseInt(colInput.value));
@@ -27,7 +29,6 @@ const universe = Universe.new(
   isPositiveNumber(rows) ? rows : 32,
   isPositiveNumber(cols) ? cols : 32
 );
-// universe.random();
 let width = universe.get_width();
 let height = universe.get_height();
 
@@ -46,11 +47,16 @@ const getIndex = (row, col) => {
 };
 
 let animationId = null;
-const render = () => {
-  for (let i = 0; i < TICK; i++) {
-    universe.tick();
+let lastTime = 0;
+let FRAME = 1000 / ANIMATION_SPEED;
+const render = (time) => {
+  if (time - lastTime > FRAME) {
+    for (let i = 0; i < TICK; i++) {
+      universe.tick();
+    }
+    drawCells();
+    lastTime = time;
   }
-  draw();
   animationId = requestAnimationFrame(render);
 };
 
@@ -90,10 +96,10 @@ const drawCells = () => {
       if (cells[idx] !== Cell.Alive) continue;
 
       ctx.fillRect(
-        col * (CELL_SIZE + 1) + 1,
-        row * (CELL_SIZE + 1) + 1,
-        CELL_SIZE,
-        CELL_SIZE
+        col * (CELL_SIZE + 1) + 2,
+        row * (CELL_SIZE + 1) + 2,
+        CELL_SIZE - 1,
+        CELL_SIZE - 1
       );
     }
   }
@@ -106,15 +112,15 @@ const drawCells = () => {
       if (cells[idx] !== Cell.Dead) continue;
 
       ctx.fillRect(
-        col * (CELL_SIZE + 1) + 1,
-        row * (CELL_SIZE + 1) + 1,
-        CELL_SIZE,
-        CELL_SIZE
+        col * (CELL_SIZE + 1) + 2,
+        row * (CELL_SIZE + 1) + 2,
+        CELL_SIZE - 1,
+        CELL_SIZE - 1
       );
     }
   }
 
-  ctx.stroke();
+  ctx.fill();
 };
 
 const play = () => {
@@ -132,13 +138,18 @@ const pause = () => {
   return true;
 };
 
+animationSpeed.addEventListener("change", (event) => {
+  ANIMATION_SPEED = parseInt(event.target.value);
+  FRAME = 1000 / ANIMATION_SPEED;
+});
+
 cellRange.addEventListener("change", (event) => {
   CELL_SIZE = parseInt(event.target.value);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   canvas.width = (CELL_SIZE + 1) * width + 1;
   canvas.height = (CELL_SIZE + 1) * height + 1;
 
-  !animationId && draw();
+  draw();
 });
 
 newSize.addEventListener("click", (event) => {
@@ -167,20 +178,16 @@ playPause.addEventListener("click", (event) => {
 
 tickSpeed.addEventListener("change", (event) => {
   TICK = parseInt(event.target.value);
-
-  // pause() && play();
 });
 
 cellColor.addEventListener("change", (event) => {
   ALIVE_COLOR = cellColor.value ? cellColor.value : "#000";
   drawCells();
-  // pause() && play();
 });
 
 borderColor.addEventListener("change", (event) => {
   STROKE_COLOR = borderColor.value ? borderColor.value : "#eee";
   drawGrid();
-  // pause() && play();
 });
 
 canvas.addEventListener("click", (event) => {
@@ -193,7 +200,7 @@ canvas.addEventListener("click", (event) => {
   const col = Math.floor(canvasLeft / (CELL_SIZE + 1));
 
   universe.toggle_cell(row, col);
-  draw();
+  drawCells();
 });
 
 nextGeneration.addEventListener("click", (event) => {
@@ -201,13 +208,13 @@ nextGeneration.addEventListener("click", (event) => {
   for (let i = 0; i < TICK; i++) {
     universe.tick();
   }
-  draw();
+  drawCells();
 });
 
 initial.addEventListener("click", (event) => {
   pause();
   universe.random();
-  draw();
+  drawCells();
 });
 
 clear.addEventListener("click", (event) => {
