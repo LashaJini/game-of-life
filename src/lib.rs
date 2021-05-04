@@ -1,3 +1,6 @@
+//! Provides methods for generating universe based on [Conway's game of life][life].
+//!
+//! [life]: https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life
 mod utils;
 
 use wasm_bindgen::prelude::*;
@@ -13,6 +16,8 @@ extern "C" {
     fn alert(s: &str);
 }
 
+/// `Cell` represents whether specific "square" of the universe is `Dead` or
+/// `Alive`.
 #[wasm_bindgen]
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -21,6 +26,7 @@ pub enum Cell {
     Dead = 0,
 }
 
+/// `Universe` is a vector of [`Cell`]s, which also saves initial state of them.
 #[wasm_bindgen]
 pub struct Universe {
     width: u32,
@@ -40,6 +46,25 @@ impl Cell {
 
 #[wasm_bindgen]
 impl Universe {
+    /// Creates universe with given optional width and height.
+    ///
+    /// Creates initial `width * height` (unwrapped) sized universe filled with `Dead` [`Cell`]s.
+    /// If `None` is passed as width and/or height, defaults to 64 for both of them.
+    ///
+    /// * `width` - width of universe.
+    /// * `height` - height of universe.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # fn main() {
+    /// use game_of_life::Universe;
+    ///
+    /// let universe = Universe::new(None, Some(128));
+    /// assert_eq!(universe.get_width(), 64);
+    /// assert_eq!(universe.get_height(), 128);
+    /// # }
+    /// ```
     pub fn new(width: Option<u32>, height: Option<u32>) -> Self {
         let width = width.unwrap_or(64);
         let height = height.unwrap_or(64);
@@ -54,6 +79,21 @@ impl Universe {
         }
     }
 
+    /// Generates "random" universe.
+    ///
+    /// Fills universe with random `Alive`/`Dead` [`Cell`]s and clones the result
+    /// to `initial_state` as well.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # fn main() {
+    /// use game_of_life::Universe;
+    ///
+    /// let mut universe = Universe::new(None, None);
+    /// universe.random();
+    /// # }
+    /// ```
     pub fn random(&mut self) {
         self.cells = (0..self.width * self.height)
             .map(|i| {
@@ -67,6 +107,20 @@ impl Universe {
         self.initial_state = self.cells.clone();
     }
 
+    /// Calculates next state of universe based on the rules of [Conway's game of life][life].
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # fn main() {
+    /// use game_of_life::Universe;
+    ///
+    /// let mut universe = Universe::new(None, None);
+    /// universe.tick();
+    /// # }
+    /// ```
+    ///
+    /// [life]: https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life
     pub fn tick(&mut self) {
         let mut next_state = self.cells.clone();
 
@@ -88,11 +142,25 @@ impl Universe {
         self.cells = next_state;
     }
 
+    /// Sets the universe `cells` and `initial_state` to `Dead` [`Cell`]s.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # fn main() {
+    /// use game_of_life::Universe;
+    ///
+    /// let mut universe = Universe::new(None, None);
+    /// universe.empty();
+    /// # }
+    /// ```
     pub fn empty(&mut self) {
         self.cells = (0..self.width * self.height).map(|_| Cell::Dead).collect();
         self.initial_state = self.cells.clone();
+        let _cells = Universe::new(None, None).get_cells();
     }
 
+    /// Sets universe `cells` to `initial_state`.
     pub fn reset(&mut self) {
         self.cells = self.initial_state.clone();
     }
@@ -115,11 +183,53 @@ impl Universe {
     pub fn get_cells(&self) -> *const Cell {
         self.cells.as_ptr()
     }
+
+    /// Set [`Cell`] state to `cell` on specific index.
+    ///
+    /// * `cell` - `Cell`.
+    /// * `row` - "matrix" row.
+    /// * `col` - "matrix" column.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # fn main() {
+    /// use game_of_life::{Universe, Cell};
+    ///
+    /// let mut universe = Universe::new(None, None);
+    /// let cell = Cell::Alive;
+    /// let row = 1;
+    /// let col = 1;
+    /// universe.set_cell(cell, row, col);
+    ///
+    /// assert_eq!(unsafe{*universe.get_cells().offset(65)}, Cell::Alive);
+    /// # }
+    /// ```
     pub fn set_cell(&mut self, cell: Cell, row: u32, col: u32) {
         let idx = self.get_index(row, col);
         self.cells[idx] = cell;
         self.initial_state[idx] = cell;
     }
+
+    /// Toggle [`Cell`] state on specific index.
+    ///
+    /// * `row` - "matrix" row.
+    /// * `col` - "matrix" column.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # fn main() {
+    /// use game_of_life::{Universe, Cell};
+    ///
+    /// let mut universe = Universe::new(None, None);
+    /// let row = 1;
+    /// let col = 1;
+    /// universe.toggle_cell(row, col);
+    ///
+    /// assert_eq!(unsafe{*universe.get_cells().offset(65)}, Cell::Alive);
+    /// # }
+    /// ```
     pub fn toggle_cell(&mut self, row: u32, col: u32) {
         let idx = self.get_index(row, col);
         self.cells[idx].toggle();
