@@ -1,3 +1,4 @@
+import { isPositiveNumber, getIndex } from "./src/helpers";
 import { memory } from "game-of-life/game_of_life_bg";
 import { Universe, Cell } from "game-of-life";
 
@@ -14,14 +15,17 @@ const cellRange = document.querySelector("#cell-size");
 const playPause = document.querySelector("#play-pause");
 const clear = document.querySelector("#clear");
 const tickSpeed = document.querySelector("#tick-speed");
+const canvas = document.querySelector(".scene");
 
 let CELL_SIZE = parseInt(cellRange.value);
 let ALIVE_COLOR = cellColor.value ? cellColor.value : "#000";
-const DEAD_COLOR = "#fff";
+let DEAD_COLOR = "#fff";
 let STROKE_COLOR = borderColor.value ? borderColor.value : "#eee";
 let TICK = parseInt(tickSpeed.value);
 let ANIMATION_SPEED = parseInt(animationSpeed.value);
-
+let animationId = null;
+let lastTime = 0;
+let FRAME = 1000 / ANIMATION_SPEED;
 let rows = Math.floor(parseInt(rowInput.value));
 let cols = Math.floor(parseInt(colInput.value));
 
@@ -32,23 +36,11 @@ const universe = Universe.new(
 let width = universe.get_width();
 let height = universe.get_height();
 
-const canvas = document.querySelector(".scene");
 canvas.width = (CELL_SIZE + 1) * width + 1;
 canvas.height = (CELL_SIZE + 1) * height + 1;
 
 const ctx = canvas.getContext("2d");
 
-function isPositiveNumber(rows) {
-  return typeof rows === "number" && rows > 0 && !Number.isNaN(rows);
-}
-
-const getIndex = (row, col) => {
-  return row * width + col;
-};
-
-let animationId = null;
-let lastTime = 0;
-let FRAME = 1000 / ANIMATION_SPEED;
 const render = (time) => {
   if (time - lastTime > FRAME) {
     for (let i = 0; i < TICK; i++) {
@@ -92,7 +84,7 @@ const drawCells = () => {
   ctx.fillStyle = ALIVE_COLOR;
   for (let row = 0; row < height; row++) {
     for (let col = 0; col < width; col++) {
-      const idx = getIndex(row, col);
+      const idx = getIndex(width, row, col);
       if (cells[idx] !== Cell.Alive) continue;
 
       ctx.fillRect(
@@ -108,7 +100,7 @@ const drawCells = () => {
   ctx.fillStyle = DEAD_COLOR;
   for (let row = 0; row < height; row++) {
     for (let col = 0; col < width; col++) {
-      const idx = getIndex(row, col);
+      const idx = getIndex(width, row, col);
       if (cells[idx] !== Cell.Dead) continue;
 
       ctx.fillRect(
