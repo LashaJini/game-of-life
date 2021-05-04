@@ -11,6 +11,20 @@ use wasm_bindgen::prelude::*;
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
+#[allow(unused_macros)]
+macro_rules! nth {
+    ($universe:expr, $idx:expr) => {
+        unsafe { *$universe.get_cells().offset($idx) }
+    };
+    ($universe:expr, $row:expr, $col:expr) => {
+        unsafe {
+            *$universe
+                .get_cells()
+                .offset($universe.get_index($row, $col) as isize)
+        }
+    };
+}
+
 #[wasm_bindgen]
 extern "C" {
     fn alert(s: &str);
@@ -269,4 +283,56 @@ impl Universe {
 
         count
     }
+}
+
+#[test]
+fn cell_toggle_test() {
+    let mut cell = Cell::Dead;
+    cell.toggle();
+    assert_eq!(Cell::Alive, cell);
+    cell.toggle();
+    assert_eq!(Cell::Dead, cell);
+}
+
+#[test]
+fn universe_state_test() {
+    let mut universe = Universe::new(Some(32), Some(32));
+    let width = universe.get_width();
+    let height = universe.get_height();
+
+    // cells and initial_state are filled with dead cells
+    for i in 0..(width * height) as isize {
+        assert_eq!(
+            unsafe { *universe.get_initial_state().offset(i) },
+            nth!(&universe, i)
+        )
+    }
+
+    // changing cells also changes initial_state
+    universe.toggle_cell(1, 1);
+    assert_eq!(nth!(&universe, universe.get_index(1, 1) as isize), unsafe {
+        *universe
+            .get_initial_state()
+            .offset(universe.get_index(1, 1) as isize)
+    })
+}
+
+#[test]
+fn universe_cell_neighbors_test() {
+    let mut universe = Universe::new(Some(32), Some(32));
+
+    assert_eq!(universe.count_number_of_neighbors(1, 1), 0);
+
+    universe.set_cell(Cell::Alive, 0, 1);
+    assert_eq!(universe.count_number_of_neighbors(1, 1), 1);
+
+    universe.set_cell(Cell::Alive, 2, 1);
+    universe.set_cell(Cell::Alive, 2, 2);
+    assert_eq!(universe.count_number_of_neighbors(1, 1), 3);
+
+    universe.set_cell(Cell::Alive, 20, 20);
+    assert_eq!(universe.count_number_of_neighbors(1, 1), 3);
+
+    universe.set_cell(Cell::Dead, 0, 1);
+    assert_eq!(universe.count_number_of_neighbors(1, 1), 2);
 }
