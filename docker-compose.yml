@@ -5,6 +5,7 @@ services:
     build:
       dockerfile: ./docker/web/Dockerfile
       context: .
+    image: 109149/game-of-life
     command: npm start
     ports:
       - 3000:3000

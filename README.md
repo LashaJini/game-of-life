@@ -28,7 +28,7 @@ npm start
 
 ### using docker-compose (not recommended)
 
-**requires**: [docker-compose](https://docs.docker.com/compose/install/).
+**requires**: [docker](https://docs.docker.com/get-docker/), [docker-compose](https://docs.docker.com/compose/install/).
 
 _image created for this project is not optimized in size (cuz of the lack of
 knowledge in docker and docker related stuff); everything works, you can still
@@ -36,9 +36,16 @@ use it._
 
 `port` - 3000
 
+with cloning:
+
 ```bash
+# clone repo
+git clone https://github.com/109149/game-of-life
+
 # start container
 docker-compose up
+
+# utils:
 
 # run detached (my preferred way)
 docker-compose up -d
@@ -46,6 +53,30 @@ docker-compose up -d
 # force rebuild
 docker-compose up --build
 
-# stop container
+# stop and remove container
 docker-compose down
+```
+
+without cloning (from docker hub):
+
+```bash
+# run detached (-d) container 109149-game-of-life (--name)
+# on port (-p) 3000 and execute command `npm start`.
+# This will pull image from docker hub if not previously installed.
+docker run -d -p 3000:3000 --name 109149-game-of-life 109149/game-of-life npm start
+
+# stop and remove container
+docker stop 109149-game-of-life && docker rm 109149-game-of-life
+```
+
+to list and remove image from your computer (first you need to remove all dependent containers):
+
+```bash
+# list images
+docker images
+
+# remove
+docker image rm 109149/game-of-life
+# or
+docker image rm <image id>
 ```
