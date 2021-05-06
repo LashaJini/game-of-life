@@ -1,277 +1,367 @@
 import React from "react";
-// import { isPositiveNumber, getIndex } from "../../utils/helpers";
-// import { memory } from "game-of-life/game_of_life_bg.wasm";
-// import { Universe, Cell } from "game-of-life";
-import "./Main.css";
+import { isPositiveNumber, getIndex } from "../../utils/helpers";
+import { memory } from "game-of-life/game_of_life_bg.wasm";
+import { Universe, Cell } from "game-of-life";
+
+const DEAD_COLOR = "#fff";
 
 const Main = () => {
-  return <div className="wait-wtf">OI</div>;
-  // React.useEffect(() => {
-  //   const animationSpeed = document.querySelector("#animation-speed");
-  //   const borderColor = document.querySelector("#border-color");
-  //   const cellColor = document.querySelector("#cell-color");
-  //   const initial = document.querySelector("#initial");
-  //   const nextGeneration = document.querySelector("#next-generation");
-  //   const newSize = document.querySelector("#universe-size");
-  //   const rowInput = document.querySelector("#row-size");
-  //   const colInput = document.querySelector("#col-size");
-  //   const reset = document.querySelector("#reset");
-  //   const cellRange = document.querySelector("#cell-size");
-  //   const playPause = document.querySelector("#play-pause");
-  //   const clear = document.querySelector("#clear");
-  //   const tickSpeed = document.querySelector("#tick-speed");
-  //   const canvas = document.querySelector(".scene");
+  const canvasRef = React.useRef();
+  const ctxRef = React.useRef();
+  const [cellSize, setCellSize] = React.useState(8);
+  const [strokeColor, setStrokeColor] = React.useState("#eee");
+  const [size, setSize] = React.useState({ width: 0, height: 0 });
+  const [cellColor, setCellColor] = React.useState("#000");
 
-  //   let CELL_SIZE = parseInt(cellRange.value);
-  //   let ALIVE_COLOR = cellColor.value ? cellColor.value : "#000";
-  //   let DEAD_COLOR = "#fff";
-  //   let STROKE_COLOR = borderColor.value ? borderColor.value : "#eee";
-  //   let TICK = parseInt(tickSpeed.value);
-  //   let ANIMATION_SPEED = parseInt(animationSpeed.value);
-  //   let animationId = null;
-  //   let lastTime = 0;
-  //   let FRAME = 1000 / ANIMATION_SPEED;
-  //   let rows = Math.floor(parseInt(rowInput.value));
-  //   let cols = Math.floor(parseInt(colInput.value));
+  React.useEffect(() => {
+    ctxRef.current = canvasRef.current.getContext("2d");
+    let canvas = canvasRef.current;
+    let ctx = ctxRef.current;
 
-  //   const universe = Universe.new(
-  //     isPositiveNumber(rows) ? rows : 32,
-  //     isPositiveNumber(cols) ? cols : 32
-  //   );
-  //   let width = universe.get_width();
-  //   let height = universe.get_height();
+    const animationSpeed = document.querySelector("#animation-speed");
+    const borderColor = document.querySelector("#border-color");
+    const initial = document.querySelector("#initial");
+    const nextGeneration = document.querySelector("#next-generation");
+    const newSize = document.querySelector("#universe-size");
+    const rowInput = document.querySelector("#row-size");
+    const colInput = document.querySelector("#col-size");
+    const reset = document.querySelector("#reset");
+    const cellRange = document.querySelector("#cell-size");
+    const playPause = document.querySelector("#play-pause");
+    const clear = document.querySelector("#clear");
+    const tickSpeed = document.querySelector("#tick-speed");
 
-  //   canvas.width = (CELL_SIZE + 1) * width + 1;
-  //   canvas.height = (CELL_SIZE + 1) * height + 1;
+    let CELL_SIZE = parseInt(cellRange.value);
+    let ALIVE_COLOR = cellColor;
+    let STROKE_COLOR = borderColor.value ? borderColor.value : "#eee";
+    let TICK = parseInt(tickSpeed.value);
+    let ANIMATION_SPEED = parseInt(animationSpeed.value);
+    let animationId = null;
+    let lastTime = 0;
+    let FRAME = 1000 / ANIMATION_SPEED;
+    let rows = Math.floor(parseInt(rowInput.value));
+    let cols = Math.floor(parseInt(colInput.value));
 
-  //   const ctx = canvas.getContext("2d");
+    const universe = Universe.new(
+      isPositiveNumber(rows) ? rows : 32,
+      isPositiveNumber(cols) ? cols : 32
+    );
+    let width = universe.get_width();
+    let height = universe.get_height();
 
-  //   const render = (time) => {
-  //     if (time - lastTime > FRAME) {
-  //       for (let i = 0; i < TICK; i++) {
-  //         universe.tick();
-  //       }
-  //       drawCells();
-  //       lastTime = time;
-  //     }
-  //     animationId = requestAnimationFrame(render);
-  //   };
+    canvas.width = (CELL_SIZE + 1) * width + 1;
+    canvas.height = (CELL_SIZE + 1) * height + 1;
 
-  //   const draw = () => {
-  //     drawGrid();
-  //     drawCells();
-  //   };
+    const render = (time) => {
+      if (time - lastTime > FRAME) {
+        for (let i = 0; i < TICK; i++) {
+          universe.tick();
+        }
+        drawCells({
+          universe,
+          ctx,
+          cellSize: CELL_SIZE,
+          deadColor: DEAD_COLOR,
+          aliveColor: ALIVE_COLOR,
+          width,
+          height,
+        });
+        lastTime = time;
+      }
+      animationId = requestAnimationFrame(render);
+    };
 
-  //   const drawGrid = () => {
-  //     ctx.beginPath();
-  //     ctx.strokeStyle = STROKE_COLOR;
+    const draw = () => {
+      drawGrid({
+        ctx,
+        strokeColor: STROKE_COLOR,
+        cellSize: CELL_SIZE,
+        width,
+        height,
+      });
+      drawCells({
+        universe,
+        ctx,
+        cellSize: CELL_SIZE,
+        deadColor: DEAD_COLOR,
+        aliveColor: ALIVE_COLOR,
+        width,
+        height,
+      });
+    };
 
-  //     for (let i = 0; i <= width; i++) {
-  //       ctx.moveTo(i * (CELL_SIZE + 1) + 1, 0);
-  //       ctx.lineTo(i * (CELL_SIZE + 1) + 1, (CELL_SIZE + 1) * height + 1);
-  //     }
+    const play = () => {
+      playPause.textContent = "pause";
 
-  //     for (let i = 0; i <= height; i++) {
-  //       ctx.moveTo(0, i * (CELL_SIZE + 1) + 1);
-  //       ctx.lineTo((CELL_SIZE + 1) * width + 1, i * (CELL_SIZE + 1) + 1);
-  //     }
+      animationId = requestAnimationFrame(render);
+      return true;
+    };
 
-  //     ctx.stroke();
-  //   };
+    const pause = () => {
+      playPause.textContent = "play";
 
-  //   const drawCells = () => {
-  //     const cellsPtr = universe.get_cells();
-  //     const cells = new Uint8Array(memory.buffer, cellsPtr, width * height);
+      cancelAnimationFrame(animationId);
+      animationId = null;
+      return true;
+    };
 
-  //     ctx.beginPath();
+    animationSpeed.addEventListener("change", (event) => {
+      ANIMATION_SPEED = parseInt(event.target.value);
+      FRAME = 1000 / ANIMATION_SPEED;
+    });
 
-  //     // Alive cells.
-  //     ctx.fillStyle = ALIVE_COLOR;
-  //     for (let row = 0; row < height; row++) {
-  //       for (let col = 0; col < width; col++) {
-  //         const idx = getIndex(width, row, col);
-  //         if (cells[idx] !== Cell.Alive) continue;
+    cellRange.addEventListener("change", (event) => {
+      CELL_SIZE = parseInt(event.target.value);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      canvas.width = (CELL_SIZE + 1) * width + 1;
+      canvas.height = (CELL_SIZE + 1) * height + 1;
 
-  //         ctx.fillRect(
-  //           col * (CELL_SIZE + 1) + 2,
-  //           row * (CELL_SIZE + 1) + 2,
-  //           CELL_SIZE - 1,
-  //           CELL_SIZE - 1
-  //         );
-  //       }
-  //     }
+      draw();
+    });
 
-  //     // Dead cells.
-  //     ctx.fillStyle = DEAD_COLOR;
-  //     for (let row = 0; row < height; row++) {
-  //       for (let col = 0; col < width; col++) {
-  //         const idx = getIndex(width, row, col);
-  //         if (cells[idx] !== Cell.Dead) continue;
+    newSize.addEventListener("click", (event) => {
+      rows = Math.floor(parseInt(rowInput.value));
+      cols = Math.floor(parseInt(colInput.value));
+      if (isPositiveNumber(rows) && isPositiveNumber(cols)) {
+        width = rows;
+        height = cols;
 
-  //         ctx.fillRect(
-  //           col * (CELL_SIZE + 1) + 2,
-  //           row * (CELL_SIZE + 1) + 2,
-  //           CELL_SIZE - 1,
-  //           CELL_SIZE - 1
-  //         );
-  //       }
-  //     }
+        universe.set_width(width);
+        universe.set_height(height);
+        // we are "emptying" after, because universe must be filled with dead cells.
+        universe.empty();
 
-  //     ctx.fill();
-  //   };
+        canvas.width = (CELL_SIZE + 1) * width + 1;
+        canvas.height = (CELL_SIZE + 1) * height + 1;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  //   const play = () => {
-  //     playPause.textContent = "pause";
+        draw();
+      }
+    });
 
-  //     animationId = requestAnimationFrame(render);
-  //     return true;
-  //   };
+    playPause.addEventListener("click", (event) => {
+      animationId ? pause() : play();
+    });
 
-  //   const pause = () => {
-  //     playPause.textContent = "play";
+    tickSpeed.addEventListener("change", (event) => {
+      TICK = parseInt(event.target.value);
+    });
 
-  //     cancelAnimationFrame(animationId);
-  //     animationId = null;
-  //     return true;
-  //   };
+    // cellColor.addEventListener("change", (event) => {
+    //   ALIVE_COLOR = cellColor.value ? cellColor.value : "#000";
+    //   drawCells({
+    //     universe,
+    //     ctx,
+    //     cellSize: CELL_SIZE,
+    //     deadColor: DEAD_COLOR,
+    //     aliveColor: ALIVE_COLOR,
+    //     width,
+    //     height,
+    //   });
+    // });
 
-  //   animationSpeed.addEventListener("change", (event) => {
-  //     ANIMATION_SPEED = parseInt(event.target.value);
-  //     FRAME = 1000 / ANIMATION_SPEED;
-  //   });
+    borderColor.addEventListener("change", (event) => {
+      STROKE_COLOR = borderColor.value ? borderColor.value : "#eee";
+      drawGrid({
+        ctx,
+        strokeColor: STROKE_COLOR,
+        cellSize: CELL_SIZE,
+        width,
+        height,
+      });
+    });
 
-  //   cellRange.addEventListener("change", (event) => {
-  //     CELL_SIZE = parseInt(event.target.value);
-  //     ctx.clearRect(0, 0, canvas.width, canvas.height);
-  //     canvas.width = (CELL_SIZE + 1) * width + 1;
-  //     canvas.height = (CELL_SIZE + 1) * height + 1;
+    canvas.addEventListener("click", (event) => {
+      const boundingRect = canvas.getBoundingClientRect();
 
-  //     draw();
-  //   });
+      const canvasLeft = event.clientX - boundingRect.left;
+      const canvasTop = event.clientY - boundingRect.top;
 
-  //   newSize.addEventListener("click", (event) => {
-  //     rows = Math.floor(parseInt(rowInput.value));
-  //     cols = Math.floor(parseInt(colInput.value));
-  //     if (isPositiveNumber(rows) && isPositiveNumber(cols)) {
-  //       width = rows;
-  //       height = cols;
+      const row = Math.floor(canvasTop / (CELL_SIZE + 1));
+      const col = Math.floor(canvasLeft / (CELL_SIZE + 1));
 
-  //       universe.set_width(width);
-  //       universe.set_height(height);
-  //       // we are "emptying" after, because universe must be filled with dead cells.
-  //       universe.empty();
+      universe.toggle_cell(row, col);
+      drawCells({
+        universe,
+        ctx,
+        cellSize: CELL_SIZE,
+        deadColor: DEAD_COLOR,
+        aliveColor: ALIVE_COLOR,
+        width,
+        height,
+      });
+    });
 
-  //       canvas.width = (CELL_SIZE + 1) * width + 1;
-  //       canvas.height = (CELL_SIZE + 1) * height + 1;
-  //       ctx.clearRect(0, 0, canvas.width, canvas.height);
+    nextGeneration.addEventListener("click", (event) => {
+      pause();
+      for (let i = 0; i < TICK; i++) {
+        universe.tick();
+      }
+      drawCells({
+        universe,
+        ctx,
+        cellSize: CELL_SIZE,
+        deadColor: DEAD_COLOR,
+        aliveColor: ALIVE_COLOR,
+        width,
+        height,
+      });
+    });
 
-  //       draw();
-  //     }
-  //   });
+    initial.addEventListener("click", (event) => {
+      pause();
+      universe.random();
+      drawCells({
+        universe,
+        ctx,
+        cellSize: CELL_SIZE,
+        deadColor: DEAD_COLOR,
+        aliveColor: ALIVE_COLOR,
+        width,
+        height,
+      });
+    });
 
-  //   playPause.addEventListener("click", (event) => {
-  //     animationId ? pause() : play();
-  //   });
+    clear.addEventListener("click", (event) => {
+      pause();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      universe.empty();
+      draw();
+    });
 
-  //   tickSpeed.addEventListener("change", (event) => {
-  //     TICK = parseInt(event.target.value);
-  //   });
+    reset.addEventListener("click", (event) => {
+      pause();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      universe.reset();
+      draw();
+    });
 
-  //   cellColor.addEventListener("change", (event) => {
-  //     ALIVE_COLOR = cellColor.value ? cellColor.value : "#000";
-  //     drawCells();
-  //   });
+    draw();
+  }, [cellColor]);
 
-  //   borderColor.addEventListener("change", (event) => {
-  //     STROKE_COLOR = borderColor.value ? borderColor.value : "#eee";
-  //     drawGrid();
-  //   });
+  const handlePlay = () => {
+    // setPlay((prev) => !prev);
+  };
 
-  //   canvas.addEventListener("click", (event) => {
-  //     const boundingRect = canvas.getBoundingClientRect();
+  const drawGrid = ({ ctx, strokeColor, cellSize, width, height }) => {
+    ctx.beginPath();
+    ctx.strokeStyle = strokeColor;
 
-  //     const canvasLeft = event.clientX - boundingRect.left;
-  //     const canvasTop = event.clientY - boundingRect.top;
+    for (let i = 0; i <= width; i++) {
+      ctx.moveTo(i * (cellSize + 1) + 1, 0);
+      ctx.lineTo(i * (cellSize + 1) + 1, (cellSize + 1) * height + 1);
+    }
 
-  //     const row = Math.floor(canvasTop / (CELL_SIZE + 1));
-  //     const col = Math.floor(canvasLeft / (CELL_SIZE + 1));
+    for (let i = 0; i <= height; i++) {
+      ctx.moveTo(0, i * (cellSize + 1) + 1);
+      ctx.lineTo((cellSize + 1) * width + 1, i * (cellSize + 1) + 1);
+    }
 
-  //     universe.toggle_cell(row, col);
-  //     drawCells();
-  //   });
+    ctx.stroke();
+  };
 
-  //   nextGeneration.addEventListener("click", (event) => {
-  //     pause();
-  //     for (let i = 0; i < TICK; i++) {
-  //       universe.tick();
-  //     }
-  //     drawCells();
-  //   });
+  const drawCells = ({
+    universe,
+    ctx,
+    cellSize,
+    deadColor,
+    aliveColor,
+    width,
+    height,
+  }) => {
+    const cellsPtr = universe.get_cells();
+    const cells = new Uint8Array(memory.buffer, cellsPtr, width * height);
 
-  //   initial.addEventListener("click", (event) => {
-  //     pause();
-  //     universe.random();
-  //     drawCells();
-  //   });
+    ctx.beginPath();
 
-  //   clear.addEventListener("click", (event) => {
-  //     pause();
-  //     ctx.clearRect(0, 0, canvas.width, canvas.height);
-  //     universe.empty();
-  //     draw();
-  //   });
+    // Alive cells.
+    ctx.fillStyle = aliveColor;
+    for (let row = 0; row < height; row++) {
+      for (let col = 0; col < width; col++) {
+        const idx = getIndex(width, row, col);
+        if (cells[idx] !== Cell.Alive) continue;
 
-  //   reset.addEventListener("click", (event) => {
-  //     pause();
-  //     ctx.clearRect(0, 0, canvas.width, canvas.height);
-  //     universe.reset();
-  //     draw();
-  //   });
+        ctx.fillRect(
+          col * (cellSize + 1) + 2,
+          row * (cellSize + 1) + 2,
+          cellSize - 1,
+          cellSize - 1
+        );
+      }
+    }
 
-  //   draw();
-  // }, []);
+    // Dead cells.
+    ctx.fillStyle = deadColor;
+    for (let row = 0; row < height; row++) {
+      for (let col = 0; col < width; col++) {
+        const idx = getIndex(width, row, col);
+        if (cells[idx] !== Cell.Dead) continue;
 
-  // return (
-  //   <>
-  //     <div className="wait-wtf">
-  //       <button id="play-pause">play</button>
-  //       <button id="next-generation">next generation</button>
-  //     </div>
-  //     <div>
-  //       <button id="initial">initial</button>
-  //       <button id="clear">clear</button>
-  //       <button id="reset">reset</button>
-  //     </div>
-  //     <div>
-  //       <label htmlFor="cell-size">cell size</label>
-  //       4<input id="cell-size" type="range" min="4" max="16" />
-  //       16
-  //     </div>
-  //     <div>
-  //       <label htmlFor="tick-speed">generation skip</label>
-  //       1<input id="tick-speed" type="range" min="1" max="10" value="1" />
-  //       10
-  //     </div>
-  //     <div>
-  //       <label htmlFor="animation-speed">animation speed</label>
-  //       1<input id="animation-speed" type="range" min="1" max="30" value="1" />
-  //       30
-  //     </div>
-  //     <div>
-  //       <input type="color" id="cell-color" />
-  //       <label htmlFor="cell-color">cell color</label>
-  //       <br />
-  //       <input type="color" id="border-color" />
-  //       <label htmlFor="border-color">border color</label>
-  //     </div>
-  //     <div>
-  //       <button id="universe-size">new size</button>
-  //       <input type="text" size="10" id="row-size" />
-  //       <input type="text" size="10" id="col-size" />
-  //     </div>
-  //     <canvas className="scene"></canvas>
-  //   </>
-  // );
+        ctx.fillRect(
+          col * (cellSize + 1) + 2,
+          row * (cellSize + 1) + 2,
+          cellSize - 1,
+          cellSize - 1
+        );
+      }
+    }
+
+    ctx.fill();
+  };
+
+  const cellColorChange = (event) => {
+    setCellColor(event.target.value || "#000");
+  };
+
+  console.log("render");
+  return (
+    <>
+      <div>
+        <button id="play-pause" onClick={handlePlay}>
+          play
+        </button>
+        <button id="next-generation">next generation</button>
+      </div>
+      <div>
+        <button id="initial">initial</button>
+        <button id="clear">clear</button>
+        <button id="reset">reset</button>
+      </div>
+      <div>
+        <label htmlFor="cell-size">cell size</label>
+        4<input id="cell-size" type="range" min="4" max="20" />
+        20
+      </div>
+      <div>
+        <label htmlFor="tick-speed">generation skip</label>
+        1<input id="tick-speed" type="range" min="1" max="10" />
+        10
+      </div>
+      <div>
+        <label htmlFor="animation-speed">animation speed</label>
+        1<input id="animation-speed" type="range" min="1" max="30" />
+        30
+      </div>
+      <div>
+        <input
+          type="color"
+          id="cell-color"
+          onChange={cellColorChange}
+          value={cellColor}
+        />
+        <label htmlFor="cell-color">cell color</label>
+        <br />
+        <input type="color" id="border-color" />
+        <label htmlFor="border-color">border color</label>
+      </div>
+      <div>
+        <button id="universe-size">new size</button>
+        <input type="text" size="10" id="row-size" />
+        <input type="text" size="10" id="col-size" />
+      </div>
+      <canvas className="scene" ref={canvasRef}></canvas>
+    </>
+  );
 };
 
 export default Main;

@@ -1,16 +1,15 @@
 body {
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
   box-sizing: border-box;
-  background: green;
+  margin: 0;
+  padding: 0;
+  background: #ccc;
 }
 
 #root {
-  width: 100%;
-  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  background: #ccc;
 }

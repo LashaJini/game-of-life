@@ -4,7 +4,7 @@ const webpack = require("webpack");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-// const ReactRefreshWebpackPlugin = require("@pmmmwh/react-refresh-webpack-plugin");
+const ReactRefreshWebpackPlugin = require("@pmmmwh/react-refresh-webpack-plugin");
 
 const outDir = "dist";
 const PORT = 3000;
@@ -15,11 +15,13 @@ module.exports = {
   output: {
     path: path.join(__dirname, outDir),
     filename: "[name].bundle.js",
+    // filename: "[name].[contenthash].js",
   },
   devServer: {
     contentBase: path.join(__dirname, outDir),
     port: PORT,
     compress: true,
+    hot: true,
   },
   devtool: "source-map",
   resolve: { extensions: ["*", ".js", ".jsx"] },
@@ -34,8 +36,8 @@ module.exports = {
       {
         test: /\.css$/,
         use: [
-          // MiniCssExtractPlugin.loader,
-          "style-loader",
+          MiniCssExtractPlugin.loader,
+          // "style-loader",
           "css-loader",
           // {
           //   loader: "postcss-loader",
@@ -67,13 +69,11 @@ module.exports = {
       minifyJS: true,
       minifyCSS: true,
     }),
-    // new MiniCssExtractPlugin({
-    //   // Options similar to the same options in webpackOptions.output
-    //   // both options are optional
-    //   filename: "static/css/[name].[contenthash:8].css",
-    //   chunkFilename: "static/css/[name].[contenthash:8].chunk.css",
-    // }),
-    // new webpack.HotModuleReplacementPlugin(),
-    // new ReactRefreshWebpackPlugin(),
+    new MiniCssExtractPlugin({
+      // filename: "static/css/[name].[contenthash:8].css",
+      // chunkFilename: "static/css/[name].[contenthash:8].chunk.css",
+    }),
+    new webpack.HotModuleReplacementPlugin(),
+    new ReactRefreshWebpackPlugin(),
   ],
 };
