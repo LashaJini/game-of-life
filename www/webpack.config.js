@@ -5,6 +5,7 @@ const HtmlWebpackPlugin = require("html-webpack-plugin");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const ReactRefreshWebpackPlugin = require("@pmmmwh/react-refresh-webpack-plugin");
+const ESLintPlugin = require("eslint-webpack-plugin");
 
 const outDir = "dist";
 const PORT = 3000;
@@ -75,5 +76,6 @@ module.exports = {
     }),
     new webpack.HotModuleReplacementPlugin(),
     new ReactRefreshWebpackPlugin(),
+    new ESLintPlugin(),
   ],
 };

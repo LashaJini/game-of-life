@@ -204,7 +204,7 @@ const Main = () => {
     animationId.current = requestAnimationFrame(render);
   };
 
-  const nextGeneration = (event) => {
+  const nextGeneration = () => {
     handlePlay(null, true);
     for (let i = 0; i < tickSpeed.current; i++) {
       universe.current.tick();
