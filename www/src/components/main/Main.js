@@ -8,21 +8,17 @@ const DEAD_COLOR = "#fff";
 const Main = () => {
   const canvasRef = React.useRef();
   const ctxRef = React.useRef();
-  // const [cellSize, setCellSize] = React.useState(8);
-  const [strokeColor, setStrokeColor] = React.useState("#eee");
-  const [size, setSize] = React.useState({ width: 0, height: 0 });
-  const [cellColor, setCellColor] = React.useState("#000");
+
+  const cellColor = React.useRef("#000");
+  const strokeColor = React.useRef("#eee");
   const [rowInput, setRowInput] = React.useState(null);
   const [colInput, setColInput] = React.useState(null);
-  const cellSize = React.useRef(8);
+  const [tick, setTick] = React.useState(1);
   const tickSpeed = React.useRef(1);
+  const cellSize = React.useRef(8);
   const animationSpeed = React.useRef(1);
   const frame = React.useRef(1000);
   const [playing, setPlaying] = React.useState(false);
-  const [universeState, setUniverseState] = React.useState({
-    rowInput,
-    colInput,
-  });
   const universe = React.useRef();
   const animationId = React.useRef();
   const lastTime = React.useRef(0);
@@ -57,9 +53,11 @@ const Main = () => {
     });
   };
 
-  const drawGrid = ({ width, height }) => {
+  const drawGrid = () => {
+    let width = universe.current.get_width();
+    let height = universe.current.get_height();
     ctxRef.current.beginPath();
-    ctxRef.current.strokeStyle = strokeColor;
+    ctxRef.current.strokeStyle = strokeColor.current;
 
     for (let i = 0; i <= width; i++) {
       ctxRef.current.moveTo(i * (cellSize.current + 1) + 1, 0);
@@ -80,14 +78,16 @@ const Main = () => {
     ctxRef.current.stroke();
   };
 
-  const drawCells = ({ width, height }) => {
+  const drawCells = () => {
+    let width = universe.current.get_width();
+    let height = universe.current.get_height();
     const cellsPtr = universe.current.get_cells();
     const cells = new Uint8Array(memory.buffer, cellsPtr, width * height);
 
     ctxRef.current.beginPath();
 
     // Alive cells.
-    ctxRef.current.fillStyle = cellColor;
+    ctxRef.current.fillStyle = cellColor.current;
     for (let row = 0; row < height; row++) {
       for (let col = 0; col < width; col++) {
         const idx = getIndex(width, row, col);
@@ -122,11 +122,13 @@ const Main = () => {
   };
 
   const cellColorChange = (event) => {
-    setCellColor(event.target.value || "#000");
+    cellColor.current = event.target.value || "#000";
+    drawCells();
   };
 
   const strokeColorChange = (event) => {
-    setStrokeColor(event.target.value || "#eee");
+    strokeColor.current = event.target.value || "#eee";
+    drawGrid();
   };
 
   const handleRowChange = (event) => {
@@ -137,14 +139,6 @@ const Main = () => {
   };
 
   const changeUniverseSize = () => {
-    setUniverseState((prev) => {
-      return {
-        ...prev,
-        rowInput,
-        colInput,
-      };
-    });
-
     if (isPositiveNumber(rowInput) && isPositiveNumber(colInput)) {
       let width = rowInput;
       let height = colInput;
@@ -162,23 +156,18 @@ const Main = () => {
         canvasRef.current.width,
         canvasRef.current.height
       );
-      draw(width, height);
+      draw();
     }
   };
 
-  const draw = (width, height) => {
-    drawGrid({
-      width: width || universe.current.get_width(),
-      height: height || universe.current.get_width(),
-    });
-    drawCells({
-      width: width || universe.current.get_width(),
-      height: height || universe.current.get_width(),
-    });
+  const draw = () => {
+    drawGrid();
+    drawCells();
   };
 
   const changeTickSpeed = (event) => {
     tickSpeed.current = parseInt(event.target.value);
+    setTick(tickSpeed.current);
   };
 
   const changeCellSize = (event) => {
@@ -209,10 +198,7 @@ const Main = () => {
       for (let i = 0; i < tickSpeed.current; i++) {
         universe.current.tick();
       }
-      drawCells({
-        width: universe.current.get_width(),
-        height: universe.current.get_height(),
-      });
+      drawCells();
       lastTime.current = time;
     }
     animationId.current = requestAnimationFrame(render);
@@ -223,19 +209,13 @@ const Main = () => {
     for (let i = 0; i < tickSpeed.current; i++) {
       universe.current.tick();
     }
-    drawCells({
-      width: universe.current.get_width(),
-      height: universe.current.get_height(),
-    });
+    drawCells();
   };
 
   const initial = () => {
     handlePlay(null, true);
     universe.current.random();
-    drawCells({
-      width: universe.current.get_width(),
-      height: universe.current.get_height(),
-    });
+    drawCells();
   };
 
   const clear = () => {
@@ -272,10 +252,7 @@ const Main = () => {
     const col = Math.floor(canvasLeft / (cellSize.current + 1));
 
     universe.current.toggle_cell(row, col);
-    drawCells({
-      width: universe.current.get_width(),
-      height: universe.current.get_height(),
-    });
+    drawCells();
   };
 
   console.log("render");
@@ -286,12 +263,33 @@ const Main = () => {
           {playing ? "pause" : "play"}
         </button>
         <button id="next-generation" onClick={nextGeneration}>
-          next generation
+          {(function () {
+            let result = "";
+            switch (tick) {
+              case 1: {
+                result = "";
+                break;
+              }
+              case 2: {
+                result = "2nd";
+                break;
+              }
+              case 3: {
+                result = "3rd";
+                break;
+              }
+              default: {
+                result = `${tick}th`;
+                break;
+              }
+            }
+            return `next ${result} generation`;
+          })()}
         </button>
       </div>
       <div>
         <button id="initial" onClick={initial}>
-          initial
+          random
         </button>
         <button id="clear" onClick={clear}>
           clear
@@ -344,7 +342,7 @@ const Main = () => {
           type="color"
           id="cell-color"
           onChange={cellColorChange}
-          value={cellColor}
+          defaultValue={cellColor.current}
         />
         <label htmlFor="cell-color">cell color</label>
         <br />
@@ -352,13 +350,13 @@ const Main = () => {
           type="color"
           id="border-color"
           onChange={strokeColorChange}
-          value={strokeColor}
+          defaultValue={strokeColor.current}
         />
         <label htmlFor="border-color">border color</label>
       </div>
       <div>
         <button id="universe-size" onClick={changeUniverseSize}>
-          new size
+          new universe
         </button>
         <input type="text" size="10" id="row-size" onChange={handleRowChange} />
         <input type="text" size="10" id="col-size" onChange={handleColChange} />
