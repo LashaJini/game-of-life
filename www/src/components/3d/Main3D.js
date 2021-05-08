@@ -376,7 +376,7 @@ const Scene = styled.div`
   height: 100vh;
   position: relative;
 
-  div {
+  &:nth-child(1) {
     top: 0;
     left: 0;
     transform: translate(20%);
