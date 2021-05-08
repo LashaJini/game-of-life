@@ -1,4 +1,4 @@
 # TODO
 
-- [ ] migrate to reactjs
-- [ ] `next ith generation` button
+- [x] migrate to reactjs
+- [x] `next ith generation` button
