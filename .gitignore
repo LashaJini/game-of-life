@@ -1,5 +1,8 @@
-*
+/*
+/*/**
+
 !.gitignore
-!/www-dist/index.html
+
 !/www-dist/*
-!/www-dist/*/*
+!/www-dist/*/**
+!*/
