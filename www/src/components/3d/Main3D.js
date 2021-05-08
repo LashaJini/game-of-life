@@ -9,8 +9,6 @@ import {
   createCSSObjects,
   createTable,
 } from "./logic";
-// import { memory } from "game-of-life/game_of_life_bg.wasm";
-// import { Universe, Cell } from "game-of-life";
 let Universe, Cell, memory;
 import("game-of-life").then((module) => {
   Universe = module.Universe;
@@ -43,6 +41,7 @@ const Main3D = () => {
   const render = React.useRef();
   const resize = React.useRef();
   const animate = React.useRef();
+  const renderUniverse = React.useRef();
 
   const objects = React.useRef();
   const targets = React.useRef({ random: [], table: [] });
@@ -98,7 +97,8 @@ const Main3D = () => {
 
     targets.current.random.forEach((object) => scene.current.add(object));
     window.addEventListener("resize", resize.current);
-    animationId.current = requestAnimationFrame(animate.current);
+    // animationId.current = requestAnimationFrame(animate.current);
+    animate.current();
     transform(objects.current, targets.current.table, 1000, render.current);
 
     return () => {
@@ -167,15 +167,8 @@ const Main3D = () => {
     render.current();
   };
 
-  animate.current = (time) => {
-    if (time - lastTime.current > frame.current) {
-      for (let i = 0; i < tickSpeed.current; i++) {
-        universe.current.tick();
-      }
-      drawCells();
-      lastTime.current = time;
-    }
-    animationId.current = requestAnimationFrame(animate.current);
+  animate.current = () => {
+    requestAnimationFrame(animate.current);
     TWEEN.update();
     controls.current.update();
   };
@@ -239,7 +232,7 @@ const Main3D = () => {
 
       cleanUpScene();
       let data = Array(width * height).fill(0);
-      objects.current = createCSSObjects(data);
+      objects.current = createCSSObjects(data, toggleCell);
 
       tableOptions.current.cols = width;
       targets.current.random = objects.current;
@@ -255,7 +248,7 @@ const Main3D = () => {
         scene.current.add(object);
       });
       transform(objects.current, targets.current.table, 1000, render.current);
-      animationId.current = requestAnimationFrame(animate.current);
+      animationId.current = requestAnimationFrame(renderUniverse.current);
     }
   };
 
@@ -284,7 +277,7 @@ const Main3D = () => {
   const handlePlay = (event, pause) => {
     setPlaying(() => {
       if (!animationId.current && !pause) {
-        animationId.current = requestAnimationFrame(animate.current);
+        animationId.current = requestAnimationFrame(renderUniverse.current);
         return true;
       }
 
@@ -293,6 +286,18 @@ const Main3D = () => {
       return false;
     });
   };
+
+  renderUniverse.current = (time) => {
+    if (time - lastTime.current > frame.current) {
+      for (let i = 0; i < tickSpeed.current; i++) {
+        universe.current.tick();
+      }
+      drawCells();
+      lastTime.current = time;
+    }
+    animationId.current = requestAnimationFrame(renderUniverse.current);
+  };
+
   const initial = () => {
     handlePlay(null, true);
     universe.current.random();
@@ -327,8 +332,6 @@ const Main3D = () => {
     let row = Math.floor(idx / universe.current.get_width());
     let col = idx % universe.current.get_width();
     universe.current.toggle_cell(row, col);
-    // let newColor = cellColor.current;
-    // targets.current.random[idx].element.firstElementChild.style.backgroundColor = "";
     drawCells();
   };
 
@@ -368,7 +371,17 @@ const Wrapper = styled.div`
   height: 100vh;
   position: relative;
 `;
-const Scene = styled.div``;
+const Scene = styled.div`
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+
+  div {
+    top: 0;
+    left: 0;
+    transform: translate(20%);
+  }
+`;
 const MenuWrapper = styled.div`
   position: absolute;
   bottom: 5%;
